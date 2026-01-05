@@ -31,16 +31,30 @@ samplerate, data = wavfile.read('../data/thermometer00.wav')
 fft_bin = int(float(freq)*float(nfft)/float(samplerate))
 
 # use one of the two channels
-frames = sigproc.framesig(data[:, 0], nfft, nfft//2, )
-
+frames = sigproc.framesig(data[:, 0], nfft, nfft//2, winfunc=np.hamming)
+nframes = frames.shape[0]
+frame_len = frames.shape[1]
 
 # %%
-autocorr = np.zeros((frames.shape[0], frames.shape[1]*2-1))
-for t in range(frames.shape[0]):
+autocorr = np.zeros((nframes, frame_len*2-1))
+for t in range(nframes):
     autocorr[t, :] = np.correlate(frames[t], frames[t], mode='full')
 
 # %%
 plt.imshow(np.log(autocorr))
+
+# %%
+tref = np.linspace(0, frame_len/samplerate, frame_len)
+xref = np.sin(tref*freq*2*np.pi)
+crosscorr = np.zeros((nframes, frame_len*2-1))
+for t in range(nframes):
+    crosscorr[t, :] = np.correlate(frames[t], xref, mode='full')
+
+# %%
+plt.figure(figsize=(16,6))
+plt.plot(np.linspace(0, nframes*(nfft//2)/samplerate, nframes), crosscorr.max(axis=1)/autocorr.max(axis=1))
+plt.xlabel('time (sec)')
+plt.axis([100, 130, 0, 0.06])
 
 # %%
 print(f"fft bin = {fft_bin}")
