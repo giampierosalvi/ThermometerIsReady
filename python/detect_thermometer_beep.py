@@ -23,17 +23,30 @@ import numpy as np
 from python_speech_features import sigproc
 
 # %%
-# frequency of termometer signal
-freq = 6080
-nfft = 2**12
+# templates of thermometer signal: defines tone or combination of tones emitted by the thermometer
+templates = [
+    {'frequencies': [6080], 'amplitudes': [1.0], 'model': 'Domotherm'},
+    {'frequencies': [8000, 12000, 16000, 20000], 'amplitudes': [0.25, 0.25, 0.25, 0.25], 'model': 'Braun PRT1000'}
+]
+# choose size of analysis window
+frame_len = 2**12
+samplerate = 48000 # we should verify that this is the same for sound
+# generate template data
+tref = np.linspace(0, frame_len/samplerate, frame_len)
+for template in templates:
+    template['data'] = np.zeros(frame_len)
+    for c in range(len(template['frequencies'])):
+        template['data'] += template['amplitudes'][c] * np.sin(2*np.pi*tref*template['frequencies'][c])
 
-samplerate, data = wavfile.read('../data/thermometer00.wav')
-fft_bin = int(float(freq)*float(nfft)/float(samplerate))
+# %%
+# read wave data
+samplerate, data = wavfile.read('../data/thermometer01.wav')
 
-# use one of the two channels
-frames = sigproc.framesig(data[:, 0], nfft, nfft//2, winfunc=np.hamming)
+#fft_bin = int(float(freq)*float(nfft)/float(samplerate))
+
+# divide recording into frames using one of the two channels
+frames = sigproc.framesig(data[:, 0], frame_len, frame_len//2, winfunc=np.hamming)
 nframes = frames.shape[0]
-frame_len = frames.shape[1]
 
 # %%
 autocorr = np.zeros((nframes, frame_len*2-1))
@@ -44,19 +57,21 @@ for t in range(nframes):
 plt.imshow(np.log(autocorr))
 
 # %%
-tref = np.linspace(0, frame_len/samplerate, frame_len)
-xref = np.sin(tref*freq*2*np.pi)
-crosscorr = np.zeros((nframes, frame_len*2-1))
-for t in range(nframes):
-    crosscorr[t, :] = np.correlate(frames[t], xref, mode='full')
+# compute cross correlation with template data
+for template in templates:
+    template['crosscorr'] = np.zeros((nframes, frame_len*2-1))
+    for t in range(nframes):
+        template['crosscorr'][t, :] = np.correlate(frames[t], template['data'], mode='full')
 
 # %%
 plt.figure(figsize=(16,6))
-plt.plot(np.linspace(0, nframes*(nfft//2)/samplerate, nframes), crosscorr.max(axis=1)/autocorr.max(axis=1))
+plt.plot(np.linspace(0, nframes*(frame_len//2)/samplerate, nframes), templates[0]['crosscorr'].max(axis=1)/autocorr.max(axis=1))
+plt.plot(np.linspace(0, nframes*(frame_len//2)/samplerate, nframes), templates[1]['crosscorr'].max(axis=1)/autocorr.max(axis=1))
 plt.xlabel('time (sec)')
-plt.axis([100, 130, 0, 0.06])
+#plt.axis([100, 130, 0, 0.06])
 
 # %%
+# obsolete, kept for reference
 print(f"fft bin = {fft_bin}")
 
 print(f"number of channels = {data.shape[1]}")
