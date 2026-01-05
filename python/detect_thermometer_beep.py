@@ -26,7 +26,7 @@ from python_speech_features import sigproc
 # templates of thermometer signal: defines tone or combination of tones emitted by the thermometer
 templates = [
     {'frequencies': [6080], 'amplitudes': [1.0], 'model': 'Domotherm'},
-    {'frequencies': [8000, 12000, 16000, 20000], 'amplitudes': [0.25, 0.25, 0.25, 0.25], 'model': 'Braun PRT1000'}
+    {'frequencies': [3937, 7875, 11813, 15735, 19673], 'amplitudes': [0.2, 0.2, 0.2, 0.2, 0.2], 'model': 'Braun PRT1000'}
 ]
 # choose size of analysis window
 frame_len = 2**12
@@ -38,37 +38,44 @@ for template in templates:
     for c in range(len(template['frequencies'])):
         template['data'] += template['amplitudes'][c] * np.sin(2*np.pi*tref*template['frequencies'][c])
 
+
 # %%
+def detect(data, frame_len, templates):
+    ntemplates = len(templates)
+    # divide recording into frames using one of the two channels
+    frames = sigproc.framesig(data[:, 0], frame_len, frame_len//2, winfunc=np.hamming)
+    nframes = frames.shape[0]
+    # energy of the signal as reference
+    energy = (frames**2).sum(axis=1)
+    # compute cross correlation with template data
+    crosscorr = np.zeros((nframes, frame_len*2-1))
+    detection = np.zeros((nframes, ntemplates))
+    for idx, template in enumerate(templates):
+        for t in range(nframes):
+            crosscorr[t, :] = np.correlate(frames[t], template['data'], mode='full')
+        detection[:, idx] = (crosscorr**2).sum(axis=1)/energy
+    return detection
+
+
+# %%
+# labels:
+labels = [t['model'] for t in templates]
+time_step = (frame_len//2)/samplerate
 # read wave data
+fig, axs = plt.subplots(3, 1, figsize=(16, 12))
+samplerate, data = wavfile.read('../data/thermometer00.wav')
+detection = detect(data, frame_len, templates)
+axs[0].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
+axs[0].legend(labels)
 samplerate, data = wavfile.read('../data/thermometer01.wav')
+detection = detect(data, frame_len, templates)
+axs[1].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
+axs[1].legend(labels)
+samplerate, data = wavfile.read('../data/thermometer02.wav')
+detection = detect(data, frame_len, templates)
+axs[2].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
+axs[2].legend(labels)
 
-#fft_bin = int(float(freq)*float(nfft)/float(samplerate))
-
-# divide recording into frames using one of the two channels
-frames = sigproc.framesig(data[:, 0], frame_len, frame_len//2, winfunc=np.hamming)
-nframes = frames.shape[0]
-
-# %%
-autocorr = np.zeros((nframes, frame_len*2-1))
-for t in range(nframes):
-    autocorr[t, :] = np.correlate(frames[t], frames[t], mode='full')
-
-# %%
-plt.imshow(np.log(autocorr))
-
-# %%
-# compute cross correlation with template data
-for template in templates:
-    template['crosscorr'] = np.zeros((nframes, frame_len*2-1))
-    for t in range(nframes):
-        template['crosscorr'][t, :] = np.correlate(frames[t], template['data'], mode='full')
-
-# %%
-plt.figure(figsize=(16,6))
-plt.plot(np.linspace(0, nframes*(frame_len//2)/samplerate, nframes), templates[0]['crosscorr'].max(axis=1)/autocorr.max(axis=1))
-plt.plot(np.linspace(0, nframes*(frame_len//2)/samplerate, nframes), templates[1]['crosscorr'].max(axis=1)/autocorr.max(axis=1))
-plt.xlabel('time (sec)')
-#plt.axis([100, 130, 0, 0.06])
 
 # %%
 # obsolete, kept for reference
@@ -95,5 +102,14 @@ detect = detect/scaling
 
 plt.plot(detect[1,:])
 
+
+# %%
+plt.plot(templates[1]['frequencies'])
+
+# %%
+freqs = templates[1]['frequencies']
+freqs[0]*5-freqs[4]
+
+# %%
 
 # %%
