@@ -62,7 +62,7 @@ def detect(data, frame_len, templates):
 labels = [t['model'] for t in templates]
 time_step = (frame_len//2)/samplerate
 # read wave data
-fig, axs = plt.subplots(3, 1, figsize=(16, 12))
+fig, axs = plt.subplots(5, 1, figsize=(16, 18))
 samplerate, data = wavfile.read('../data/thermometer00.wav')
 detection = detect(data, frame_len, templates)
 axs[0].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
@@ -75,6 +75,14 @@ samplerate, data = wavfile.read('../data/thermometer02.wav')
 detection = detect(data, frame_len, templates)
 axs[2].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
 axs[2].legend(labels)
+samplerate, data = wavfile.read('../data/thermometer03.wav')
+detection = detect(data, frame_len, templates)
+axs[3].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
+axs[3].legend(labels)
+samplerate, data = wavfile.read('../data/thermometer04.wav')
+detection = detect(data, frame_len, templates)
+axs[4].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
+axs[4].legend(labels)
 
 
 # %%
