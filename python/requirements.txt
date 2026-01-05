@@ -1,2 +1,5 @@
 scipy
 matplotlib
+jupyter
+jupytext
+python_speech_features
