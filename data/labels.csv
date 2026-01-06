@@ -1,6 +1,8 @@
-file,model
-thermometer00.wav,Domotherm
-thermometer01.wav,Braun PRT1000
-thermometer02.wav,Braun PRT1000
-thermometer03.wav,Domotherm
-thermometer04.wav,Domotherm
+file,model,phone
+thermometer00.wav,Domotherm,Samsung S21
+thermometer01.wav,Braun PRT1000,Samsung S21
+thermometer02.wav,Braun PRT1000,Samsung S21
+thermometer03.wav,Domotherm,Samsung S21
+thermometer04.wav,Domotherm,Samsung S21
+thermometer05.wav,Domotherm,mamma
+thermometer06.wav,Domotherm,mamma
