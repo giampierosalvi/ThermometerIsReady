@@ -54,35 +54,32 @@ def detect(data, frame_len, templates):
         for t in range(nframes):
             crosscorr[t, :] = np.correlate(frames[t], template['data'], mode='full')
         detection[:, idx] = (crosscorr**2).sum(axis=1)/energy
+        #detection[:, idx] = crosscorr.max(axis=1)/energy
     return detection
 
 
 # %%
+# list of audio files
+files = [
+    '../data/thermometer00.wav',
+    '../data/thermometer01.wav',
+    '../data/thermometer02.wav',
+    '../data/thermometer03.wav',
+    '../data/thermometer04.wav',
+    '../data/thermometer05.wav',
+    '../data/thermometer06.wav',
+]
 # labels:
 labels = [t['model'] for t in templates]
 time_step = (frame_len//2)/samplerate
 # read wave data
-fig, axs = plt.subplots(5, 1, figsize=(16, 18))
-samplerate, data = wavfile.read('../data/thermometer00.wav')
-detection = detect(data, frame_len, templates)
-axs[0].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
-axs[0].legend(labels)
-samplerate, data = wavfile.read('../data/thermometer01.wav')
-detection = detect(data, frame_len, templates)
-axs[1].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
-axs[1].legend(labels)
-samplerate, data = wavfile.read('../data/thermometer02.wav')
-detection = detect(data, frame_len, templates)
-axs[2].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
-axs[2].legend(labels)
-samplerate, data = wavfile.read('../data/thermometer03.wav')
-detection = detect(data, frame_len, templates)
-axs[3].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
-axs[3].legend(labels)
-samplerate, data = wavfile.read('../data/thermometer04.wav')
-detection = detect(data, frame_len, templates)
-axs[4].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
-axs[4].legend(labels)
+nfiles = len(files)
+fig, axs = plt.subplots(nfiles, 1, figsize=(16, 3*nfiles))
+for idx, file in enumerate(files):
+    samplerate, data = wavfile.read(file)
+    detection = detect(data, frame_len, templates)
+    axs[idx].plot(np.linspace(0, detection.shape[0]*time_step, detection.shape[0]), detection)
+    axs[idx].legend(labels)
 
 
 # %%
